@@ -1,0 +1,8 @@
+---
+# This playbook configrues the lamp stack of a webserver
+- name: Configure and deploy the webserver applications
+  hosts: webserver
+  remote_user: root
+
+  roles: 
+    - web
