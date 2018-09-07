@@ -1,0 +1,94 @@
+---
+- hosts: lamp
+  remote_user: ubuntu
+  become: true
+
+  vars:
+    app_download_dest: /tmp/webapp
+    app_dest: /var/www/webapp
+    app_repo: http://github.com/whelmed/ansible_demo.git
+
+  tasks:
+    - name: Install packages
+      apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: true 
+      with_items:
+        - apache2
+        - mysql-server
+        - mysql-common
+        - mysql-client
+        - libapache2-mod-wsgi
+
+    - name: Start service
+      service:
+        name: "{{ item }}"
+        state: started
+      with_items:
+        - apache2
+        - mysql
+
+    - name: Enable modssl
+      shell: a2enmod ssl
+
+    - name: Enable default HTTPS site
+      shell: a2ensite default-ssl
+      notify: restart apache
+
+    # Database
+    - name: Install Python mysql lib
+      apt:
+        name: python-mysqldb
+        state: present
+      
+    - name: MySQL User creation
+      mysql_user: 
+        name: appuser
+        password: 94nfsUl7
+        priv: "*.*:ALL"
+        state: present
+
+    - name: Create MySql database
+      mysql_db:
+        name: appdata
+        state: present
+
+    # App
+    - name: Install pip
+      apt:
+        name: python-pip
+        state: present
+    
+    - name: Download app
+      git: 
+        repo: "{{ app_repo }}"
+        dest: "{{ app_download_dest }}"
+
+    - name: Install app requirements
+      pip:
+        requirements: "{{ app_download_dest }}/app/requirements.txt"
+    
+    # Site install / configure
+    - name: Copy app to apache owner folder
+      shell: "rsync -av {{ app_download_dest }}/app/ {{ app_dest }}"
+
+    - name: Install mod-wsgi
+      apt:
+        name: libapache2-mod-wsgi
+        state: present
+
+    - name: Copy the apache configuration file
+      template:
+        src: "apache.conf"
+        dest: /etc/apache2/sites-available/000-default.conf
+      notify: restart apache
+
+
+  handlers:
+    - name: restart apache
+      service:
+        name: apache2
+        state: restarted
+
+
