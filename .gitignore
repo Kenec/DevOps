@@ -1,3 +1,4 @@
 terraform.tfvars
 .DS_Store
 Ansible/example0/.DS_Store
+.idea

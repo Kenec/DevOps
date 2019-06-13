@@ -1,0 +1,16 @@
+version: "3"
+services:
+  postgres:
+    image: 'postgres:latest'
+    environment:
+      - PGUSER=postgres
+      - PGHOST=postgres
+      - PGDATABASE=postgres
+      - PGPASSWORD=docker
+      - PGPORT=5432
+    ports:
+      - "5432:5432"
+    volumes:
+     - my-datavolume:/var/lib/postgresql/data
+volumes:
+  my-datavolume:
